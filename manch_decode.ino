@@ -1,4 +1,4 @@
-#define L Serial.println
+#define L Serial.print
 
 #define VERBOSE_PREAMBLE 1
 
@@ -27,15 +27,18 @@ namespace Manch{
     
     if(status==RESYNC){
         #if VERBOSE_PREAMBLE==1
-        Serial.print("<RESYNC> ");
-        Serial.println(error);
+         Serial.print("<RESYNC> ");
+         Serial.println(error);
         #endif
-         
+        
+        //reset everything and wait for a preamble and resync
         i=0;
         T=0;
         w=0;
-        p=0;
+        
         buffer=0x0;
+        p=0;
+        
         status=PREAMBLE;
     }
     
@@ -75,6 +78,7 @@ namespace Manch{
                    status = SYNC;
                    i = 0;
                    
+                   p=4; //checksum start at the 4th bit
                    buffer = buffer | s<<7-p++;
                    
                    #if VERBOSE_PREAMBLE==1
@@ -91,59 +95,62 @@ namespace Manch{
     
     else{ // SYNCED start to decode to buffer
       
-      if(t>T*2.5 || t<T*0.5){
+      if(t>T*2.5 || t<T*0.75){ //timming is very off
         status=RESYNC;
         error == 98;
       }
       
       //decode
       if(t>T*1.5){ //2t
-        buffer = buffer | s<<7-p++; L(s);
+        buffer = buffer | s<<7-p++; //L(s);
       }
       else{ //t
          if(w<1){ //first t
            w=1;
          }
          else{ //second t
-           buffer = buffer | s<<7-p++; L(s);
+           buffer = buffer | s<<7-p++; //L(s);
            w=0;
          }        
       }
       
       
-      //checksum after sync signal
+      //do a CHECKSUM after sync signal
       if(status==SYNC){
-        if(i>3){
-           
-           buffer = buffer>>4;
-          
-           if(buffer==0b0100){
+        
+        if(p>7){// wait for a complete byte  
+           if(buffer==0b0100){ //checksum
              status = CHECK;
+             
              #if VERBOSE_PREAMBLE==1
                Serial.println(" CHECK! \n");
              #endif
              
-             i=0;
-             p=0;
+             //clear
              buffer=0x0;
+             p=0;
            }
-           else{
-             #if VERBOSE_PREAMBLE==1
-               Serial.println(buffer, BIN);
-               Serial.println("<INVALID CHECKSUM>");
-               
-             #endif
+           else{ //invalid checksum
              status=RESYNC;
-             error=97;
+             
+             #if VERBOSE_PREAMBLE==1
+               Serial.println("<INVALID CHECKSUM>");
+               error=97;
+             #endif
+             
+             
           }
         } 
       }
       
+      
       //start pushing bytes to out buffer
-      if(status==CHECK){
+      else if(status==CHECK){
         //received a full byte
         if(p>7){
-            //Serial.println(b, BIN);
+            
+            //Serial.println();
+            //Serial.println(buffer, BIN);
             //Serial.println(b, DEC);
             //Serial.write(b);
             
@@ -153,6 +160,7 @@ namespace Manch{
             p=0;
         }
       }
+      
       
     }
   
