@@ -20,9 +20,11 @@ namespace Manch{
     static uint8_t i; //count edges on the preamble stage
     
     static bool w; //keep track of the 2T timing
-    
-    static byte buffer; //used to store bits until a full byte is received
-    static uint8_t p;   //position of current bit
+     
+    static struct { //used to store bits until a full byte is received
+        byte buffer;
+        uint8_t pos;
+    } bits;
     
     ++i;
     
@@ -32,8 +34,8 @@ namespace Manch{
         T=0;
         w=0;
         
-        buffer=0x0;
-        p=0;
+        bits.buffer=0x0;
+        bits.pos=0;
         
         status=PREAMBLE;
         
@@ -78,8 +80,8 @@ namespace Manch{
                    status = SYNC;
                    i = 0;
                    
-                   p=4; //checksum start at the 4th bit
-                   buffer = buffer | s<<7-p++;
+                   bits.pos=4; //checksum start at the 4th bit
+                   bits.buffer = bits.buffer | s<<7-bits.pos++;
                    
                    #if VERBOSE==1
                      Serial.println(" SYNC!\n");
@@ -100,14 +102,14 @@ namespace Manch{
       
       //decode
       if(t>T*1.5){ //2t
-        buffer = buffer | s<<7-p++; 
+        bits.buffer = bits.buffer | s<<7-bits.pos++; 
       }
       else{ //t
          if(w<1){ //first t
            w=1;
          }
          else{ //second t
-           buffer = buffer | s<<7-p++;
+           bits.buffer = bits.buffer | s<<7-bits.pos++;
            w=0;
          }        
       }
@@ -116,8 +118,8 @@ namespace Manch{
       //do a CHECKSUM after sync signal
       if(status==SYNC){
         
-        if(p>7){// wait for a complete byte  
-           if(buffer==0b0100){ //checksum
+        if(bits.pos>7){// wait for a complete byte  
+           if(bits.buffer==0b0100){ //checksum
              status = CHECK;
              
              #if VERBOSE==1
@@ -125,15 +127,14 @@ namespace Manch{
              #endif
              
              //clear
-             buffer=0x0;
-             p=0;
+             bits.buffer=0x0;
+             bits.pos=0;
            }
            else{ //invalid checksum
              status=RESYNC;
              
              #if VERBOSE==1
                Serial.println("<INVALID CHECKSUM>");
-               error=97;
              #endif
              
              
@@ -145,17 +146,17 @@ namespace Manch{
       //start pushing bytes to out buffer
       else if(status==CHECK){
         //received a full byte
-        if(p>7){
+        if(bits.pos>7){
             
             //Serial.println();
             //Serial.println(buffer, BIN);
             //Serial.println(b, DEC);
             //Serial.write(b);
             
-            Buffer::enqueue(buffer);
+            Buffer::enqueue(bits.buffer);
             
-            buffer = 0x0; //clear
-            p=0;
+            bits.buffer = 0x0; //clear
+            bits.pos = 0;
         }
       }
       
