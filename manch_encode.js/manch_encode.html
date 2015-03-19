@@ -266,7 +266,10 @@ window.animLoop = function( render, element ) {
 
 f = fpsMeter(fpsLabel, 1);
 
-/* FPS Meter - vitim.us */
+/*
+   FPS Meter - vitim.us
+   https://github.com/victornpb/fpsMeter/
+*/
 function fpsMeter(elm, refresh){
     //var elm;             //element
     //var refresh;         //refresh every x seconds
@@ -289,9 +292,6 @@ function fpsMeter(elm, refresh){
                 compRate = ((compRate*0.5)+((fps*refresh)*0.5))<<0;
                 
                 elm.innerHTML = fps;
-                //fpsLast.innerHTML = Date.now();
-                
-               // console.log(fps, compRate, new Date().toISOString());
             }
             else{
                 compRate*=2;                
