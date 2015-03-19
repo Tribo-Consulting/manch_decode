@@ -1,0 +1,314 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Manch Encode</title>
+<!-- Favicon
+<link rel="icon" type="image/png" href="favicon.png" />
+-->
+
+<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+
+<!--
+<link rel="apple-touch-startup-image" href="startup_320x460.png" />
+<link rel="apple-touch-icon" href="touch-icon-iphone.png" />
+<link rel="apple-touch-icon" sizes="72x72" href="touch-icon-ipad.png" />
+<link rel="apple-touch-icon" sizes="114x114" href="touch-icon-iphone-retina.png" />
+<link rel="apple-touch-icon" sizes="144x144" href="touch-icon-ipad-retina.png" />
+<meta name="format-detection" content="telephone=no">
+-->
+
+<!-- External Style Sheet
+<link rel="stylesheet" href="style.css" type="text/css" charset="utf-8">
+-->
+
+<script src="drag_resize.js"></script>
+<link href="drag_resize.css" rel="stylesheet">
+
+<style type="text/css">
+/* CSS GOES HERE */
+
+/* disable anti-aliasing */
+*{
+	text-rendering: optimizeSpeed;
+	font-smooth: never;
+	-webkit-font-smoothing : none;
+}
+
+window, body {
+	margin: 0;
+	width: 100%;
+	height: 100%;
+}
+body {
+	font-family: Helvetica, Arial, sans-serif;
+	background-color: #000;
+	color: white;
+}
+
+input[type="text"],
+input[type="number"]{
+	background-color: #000;
+	border: 1px solid #888;
+	color: #888;
+}
+
+button,
+input[type="buton"]{
+	background-color: #666;
+	border: 1px solid #333;
+	color: #000;
+}
+button:hover,
+input[type="buton"]:hover{
+	background-color: #888;
+}
+button:active,
+input[type="buton"]:active{
+	background-color: #333;
+	color: #666;
+}
+
+
+#area {
+	position:absolute;
+	top: 0px;
+	left: 0px;
+	bottom: 0px;
+	right: 0px;
+	
+	border: 1px dotted blue;
+}
+.inputArea{
+	margin: 1em;
+	color: #888;
+}
+.status_area{
+	font-size: 9pt;
+	font-family: sans-serif;
+	
+	max-width: 80%;
+	word-wrap: break-word;
+}
+.status_area #log_binary,
+.status_area #log_other{
+	font-family: monospace;
+
+	max-width: 100%;
+	word-wrap: break-word;
+}
+#draggableBox {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 100px;
+	height: 100px;
+	z-index: 1;
+	
+	outline: 4px dashed #666;
+
+	font-size: 9pt;
+	color: gray;
+	text-align: center;
+}
+
+#flickDiv {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	right: 0px;
+	bottom: 0px;
+	z-index: 1;
+
+	margin: 5px;
+}
+
+#fpsLabel {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	width: 4em;
+	height: 1em;
+	z-index: 1;
+
+	font: 9pt monospace;
+
+	text-outline: 1px solid white;
+	text-rendering: optimizeSpeed;
+	font-smooth: never;
+	-webkit-font-smoothing : none;
+}
+
+</style>
+</head>
+<body>
+
+<div id="area">
+	
+	<div class="inputArea">
+		<h3>Manchester</h3>
+	    Message: <input id="data" type="text" value="Hello">
+	    <button id="startButton">SEND</button>
+	    <button id="stopButton">STOP</button>
+	    <br>
+		Interval: <input id="speed" type="number" min="1" max="1000" value="32">ms
+		
+	    <div class="status_area">
+	    	<br>
+			<div id="log_status">Status: Javascript not loaded.</div>
+	    	<div id="log_binary"></div>
+	    	<div id="log_other"></div>
+	    </div>
+	</div>
+
+	<div id="fpsLabel">FPS</div>
+
+	<div id="draggableBox" class="Draggable">
+		<br>
+		Drag-me!
+
+		<div id="flickDiv"></div>
+	</div>
+	
+</div>
+
+<script src="manch_encode.js"></script>
+<script type="text/javascript">
+
+tx = 200;
+ty = 200;
+
+/* JAVASCRIPT GOES HERE */
+window.onload=function(){
+
+	makeDraggable(draggableBox);
+
+	animLoop(loop);
+
+	startButton.onclick = sendButtonAction;
+	stopButton.onclick = stopButtonAction;
+
+	logStatus("Ready");
+};
+
+
+var prevMillis=0;
+function loop(){
+	f();
+	//console.log(1);
+
+	var currMillis = Date.now();
+	var diff = currMillis - prevMillis;
+
+	if(diff>=interval){
+		
+		if(!done){
+			if(buffer.p==0){
+				logStatus("Sending preamble");
+			}
+			//print progress every 16 bauds (1byte)
+			else if(buffer.p%16 == 0){
+				var percent = (buffer.p*100)/buffer.b.length;
+				logStatus( (percent<<0) + "%");
+			}
+
+			if(buffer.p<buffer.b.length){
+				digitalWrite(buffer.b[buffer.p++]);
+			}
+			else{
+				logStatus("Finished");
+				done = true;
+			}
+		}
+
+
+		prevMillis = currMillis;
+	}
+	
+}
+
+
+// Cross browser, backward compatible solution
+(function( window, Date ) {
+// feature testing
+var raf = window.mozRequestAnimationFrame    ||
+          window.webkitRequestAnimationFrame ||
+          window.msRequestAnimationFrame     ||
+          window.oRequestAnimationFrame;
+ 
+window.animLoop = function( render, element ) {
+  var running, lastFrame = +new Date;
+  function loop( now ) {
+    if ( running !== false ) {
+      raf ?
+        raf( loop, element ) :
+        // fallback to setTimeout
+        setTimeout( loop, 16 );
+      // Make sure to use a valid time, since:
+      // - Chrome 10 doesn't return it at all
+      // - setTimeout returns the actual timeout
+      now = now && now > 1E4 ? now : +new Date;
+      var deltaT = now - lastFrame;
+      // do not render frame when deltaT is too high
+      if ( deltaT < 160 ) {
+        running = render( deltaT, now );
+      }
+      lastFrame = now;
+    }
+  }
+  loop();
+};
+})( window, Date );
+
+
+
+f = fpsMeter(fpsLabel, 1);
+
+/* FPS Meter - vitim.us */
+function fpsMeter(elm, refresh){
+    //var elm;             //element
+    //var refresh;         //refresh every x seconds
+    
+    var compRate = 1;      //compute frame rate every x frames (calculated on the go)
+    var frames = 0;        //number of frames since last timing
+    var last = 0; //start Timing 
+    
+    return function(){
+        if(++frames > compRate){
+            var now = Date.now();
+            var diff = now - last;
+            
+            if(diff>0){
+                var fps = (1000/(diff/frames))<<0;
+                last = now;
+                frames = 0;
+                
+                //exponential ramp the next update to match the current refresh rate
+                compRate = ((compRate*0.5)+((fps*refresh)*0.5))<<0;
+                
+                elm.innerHTML = fps;
+                //fpsLast.innerHTML = Date.now();
+                
+               // console.log(fps, compRate, new Date().toISOString());
+            }
+            else{
+                compRate*=2;                
+            }
+        }
+    }
+}
+
+function logStatus(str){
+	log_status.innerHTML = "Status: "+str;
+}
+function logData(str){
+	log_binary.innerHTML = "Data: "+str;
+}
+function logRaw(str){
+	log_other.innerHTML = "Raw: "+str;
+}
+</script>
+</body>
+</html>
