@@ -1,4 +1,7 @@
-/***/
+/**
+ * @author Victornpb
+ * https://github.com/victornpb/manch_decode/
+*/
 
 var interval = 32;
 
