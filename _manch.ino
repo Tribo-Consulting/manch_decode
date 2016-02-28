@@ -5,7 +5,7 @@
  by Victor N. Borges -
  
  http://www.vitim.us
- https://github.com/victornpb
+ https://github.com/victornpb/manch_decode/
  
  This arduino sketch provides software to decode manchester encoding.
  The code is abstract and can be used independently of the hardware used.
