@@ -1,5 +1,7 @@
 # manch_decode
 
+Manchester code (also known as phase encoding, or PE) is a line code in which the encoding of each data bit is either low then high, or high then low, for equal time. It is a self-clocking signal with no DC component. As a result, electrical connections using a Manchester code are easily galvanically isolated. Manchester coding is a special case of binary phase-shift keying (BPSK), where the data controls the phase of a square wave carrier whose frequency is the data rate. Manchester code ensures frequent line voltage transitions, directly proportional to the clock rate; this helps clock recovery.
+
  This arduino sketch provides software to decode manchester encoding.
  The code is abstract and can be used independently of the hardware used.
  You just need to provide the logic levels and the interval between transitions to the decode function.
