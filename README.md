@@ -28,7 +28,9 @@ Manchester code (also known as phase encoding, or PE) is a line code in which th
                    sync (first transision)
 </pre>
 
-This is meant to be a simple implementation, it is NOT a protocol, it does not have CRC. But it can be implemented on top of it. Then if your data does not pass CRC, you can set `Manch.status = RESYNC` to force a resync. 
+This is meant to be a simple implementation, it is NOT a full communication protocol, this sits at a layer below the protocol and it is only responsible for the data decoding.
+Even tho you could it as is, a handshakes and error correction (CRC) should be implemented on top of this.
+Your protocol can set `Manch.status = RESYNC` to force a resync (in case of CRC Errors), the sender should restart the transmission, sending a preamble and handshake again.
 
 ----
 
