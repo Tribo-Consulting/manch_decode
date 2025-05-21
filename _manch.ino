@@ -5,7 +5,7 @@
  by Victor N. Borges -
  
  http://www.vitim.us
- https://github.com/victornpb/manch_decode/
+ https://github.com/victornpb
  
  This arduino sketch provides software to decode manchester encoding.
  The code is abstract and can be used independently of the hardware used.
@@ -187,7 +187,7 @@ namespace Manch{
                 if(bits.pos>7){
                     //Serial.println();
                     //Serial.println(buffer, BIN);
-                    //Serial.println(b, DEC);
+                    //Serial.println(bits.buffer, DEC);
                     //Serial.write(b);
 
                     Buffer::enqueue(bits.buffer);

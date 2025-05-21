@@ -1,6 +1,6 @@
 namespace Buffer{
 
-    const int ringsize = 8; //buffer length
+    const int ringsize = 64; //buffer length
     
     uint8_t head = 0;
     uint8_t tail = 0;
